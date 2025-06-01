@@ -117,7 +117,7 @@
 
         <div class="form-group">
             <label for="url">點擊後連結 (URL):</label>
-            <input type="text" id="url" value="https://taiwan-walking-cat.github.io/"
+            <input type="text" id="url" value="https://i-like-dev.github.io/"
                 placeholder="例如: https://your-website.com">
         </div>
 
@@ -128,8 +128,12 @@
 
     <script>
         // 設定您的 Google Apps Script 部署 URL
-        // 這個 URL 會接收來自前端的 POST 請求，並在後端執行 sendFCM 函數
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNikdW9qjAw3lqeoqnfGcB9vzaf0-mEDnykVmTWfoTxEPdN2dIIUNqUlBKTWpFCa45/exec';
+        // **!!! 這一步非常重要 !!!**
+        // 請將此處的 URL 替換為您在 Apps Script 部署「新版本」後獲得的「網路應用程式 URL」。
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNikdW9qjAw3lqeoqnfGcB9vzaf0-mEDnykVmTWfoTxEPdN2dIIUNqUlBKTWpFCa45/exec'; 
+        // 您的實際 URL 應該長這樣：
+        // const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_ACTUAL_APPS_SCRIPT_DEPLOYMENT_ID/exec';
+
 
         document.getElementById('sendButton').addEventListener('click', async () => {
             const sendButton = document.getElementById('sendButton');
@@ -144,9 +148,8 @@
             const title = document.getElementById('title').value.trim();
             const body = document.getElementById('body').value.trim();
             const url = document.getElementById('url').value.trim();
-            // 由於圖片和徽章欄位已移除，這裡直接給予空字串或 null
-            const image = ''; // 或 null
-            const badge = ''; // 或 null
+            const image = ''; // 圖片 URL 保持空字串
+            const badge = ''; // 徽章圖示 URL 保持空字串
 
 
             if (!target) {
@@ -175,8 +178,8 @@
                     title: title,
                     body: body,
                     url: url,
-                    image: image, // 會傳遞空字串
-                    badge: badge, // 會傳遞空字串
+                    image: image,
+                    badge: badge,
                 };
 
                 const response = await fetch(APPS_SCRIPT_URL, {
