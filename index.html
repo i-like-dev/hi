@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>發送 FCM 推播訊息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            box-sizing: border-box; /* 確保 padding 不增加寬度 */
+        }
+
+        textarea {
+            resize: vertical; /* 允許垂直調整大小 */
+            min-height: 80px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #statusMessage {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none; /* 預設隱藏 */
+            text-align: center;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>發送 FCM 推播通知</h1>
+
+        <div class="form-group">
+            <label for="target">目標主題 (Topic):</label>
+            <input type="text" id="target" value="notification" placeholder="例如: notification, news">
+        </div>
+
+        <div class="form-group">
+            <label for="title">標題:</label>
+            <input type="text" id="title" value="新通知！" placeholder="通知標題">
+        </div>
+
+        <div class="form-group">
+            <label for="body">內容:</label>
+            <textarea id="body" placeholder="通知內容">這是一個測試推播通知的內容。</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="url">點擊後連結 (URL):</label>
+            <input type="text" id="url" value="https://taiwan-walking-cat.github.io/"
+                placeholder="例如: https://your-website.com">
+        </div>
+
+        <button id="sendButton">發送推播</button>
+
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        // 設定您的 Google Apps Script 部署 URL
+        // 這個 URL 會接收來自前端的 POST 請求，並在後端執行 sendFCM 函數
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxNikdW9qjAw3lqeoqnfGcB9vzaf0-mEDnykVmTWfoTxEPdN2dIIUNqUlBKTWpFCa45/exec';
+
+        document.getElementById('sendButton').addEventListener('click', async () => {
+            const sendButton = document.getElementById('sendButton');
+            const statusMessage = document.getElementById('statusMessage');
+
+            sendButton.disabled = true;
+            sendButton.textContent = '發送中...';
+            statusMessage.style.display = 'none';
+            statusMessage.className = ''; // 清除之前的狀態類別
+
+            const target = document.getElementById('target').value.trim();
+            const title = document.getElementById('title').value.trim();
+            const body = document.getElementById('body').value.trim();
+            const url = document.getElementById('url').value.trim();
+            // 由於圖片和徽章欄位已移除，這裡直接給予空字串或 null
+            const image = ''; // 或 null
+            const badge = ''; // 或 null
+
+
+            if (!target) {
+                displayStatus('error', '請輸入目標主題！');
+                sendButton.disabled = false;
+                sendButton.textContent = '發送推播';
+                return;
+            }
+            if (!title) {
+                displayStatus('error', '請輸入標題！');
+                sendButton.disabled = false;
+                sendButton.textContent = '發送推播';
+                return;
+            }
+            if (!body) {
+                displayStatus('error', '請輸入內容！');
+                sendButton.disabled = false;
+                sendButton.textContent = '發送推播';
+                return;
+            }
+
+            try {
+                const payload = {
+                    method: 'sendTopic', // 這是您Apps Script中doPost判斷的方法名
+                    topic: target,
+                    title: title,
+                    body: body,
+                    url: url,
+                    image: image, // 會傳遞空字串
+                    badge: badge, // 會傳遞空字串
+                };
+
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text(); // 獲取原始錯誤文本
+                    throw new Error(`HTTP 錯誤! 狀態碼: ${response.status}. 詳情: ${errorText}`);
+                }
+
+                const data = await response.json(); // 嘗試解析 JSON
+
+                if (data && data.status === 'success') {
+                    displayStatus('success', '推播訊息已成功發送！');
+                } else {
+                    displayStatus('error', `發送失敗：${data.message || '未知錯誤'}`);
+                }
+
+            } catch (error) {
+                console.error('發送推播時發生錯誤:', error);
+                displayStatus('error', `發送失敗：${error.message}`);
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = '發送推播';
+            }
+        });
+
+        function displayStatus(type, message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.textContent = message;
+            statusMessage.className = type; // 添加 'success' 或 'error' 類別
+            statusMessage.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
